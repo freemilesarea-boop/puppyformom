@@ -8,6 +8,34 @@ Check items off as you go. Nothing here requires real ad/IAP SDKs (all mocked).
 
 ---
 
+## 🇰🇷 처음이라면 (3분 요약)
+
+> 프로젝트를 받고 여는 자세한 방법은 [`README.md`](README.md)의
+> **"초보자용 로컬 실행 가이드"** 를 먼저 보세요. 아래는 빠른 점검용입니다.
+
+1. Unity Hub에서 프로젝트 열기 → 첫 임포트 끝날 때까지 대기.
+2. **Console 창**(`Window ▸ General ▸ Console`)에 **빨간 에러가 없는지** 확인.
+3. `Assets ▸ Scenes ▸ Boot` 더블클릭으로 씬 열기.
+4. 상단 **▶ Play** 누르기.
+5. **부팅 → 메인 메뉴 → PLAY → 달리기**가 되면 성공. 클릭/스페이스로 점프.
+
+### ✅ "정상" 한눈에 보기
+| 단계 | 정상 화면 |
+|------|-----------|
+| Play 직후 | 따뜻한 파스텔 부팅 화면 (약 0.6초) |
+| 그 다음 | 메인 메뉴: 제목 + 강아지 + **PLAY / 상점 / 도감 / 설정** |
+| PLAY 후 | 상단에 거리/점수/뼈다귀, "탭하여 시작" 안내 |
+| 클릭/스페이스 | 강아지가 점프하며 자동 달리기 시작 |
+| 장애물 충돌 | 게임오버 패널 (다시하기 / 메인 메뉴 / 부활) |
+
+### 🚨 에러가 보이면 어디를 캡처?
+- **Console 창의 빨간 줄** → 클릭해서 펼친 **상세 내용 전체**를 캡처.
+  특히 **`error CS####`** 줄이 핵심입니다.
+- 또는 로그 파일: Windows `…\AppData\Local\Unity\Editor\Editor.log` /
+  macOS `~/Library/Logs/Unity/Editor.log`.
+
+---
+
 ## 0. Project sanity (before pressing Play)
 - [ ] Project opens in Unity Hub without errors; first import finishes.
 - [ ] **Console has zero red compile errors.** (Yellow warnings OK.)
