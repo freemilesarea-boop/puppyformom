@@ -12,8 +12,8 @@ namespace PuppyForMom.Core
         // The puppy auto-runs: the world scrolls left at this speed (units/sec).
         public const float StartScrollSpeed = 6f;
         public const float MaxScrollSpeed = 14f;
-        // Speed gained per metre travelled. Keeps difficulty climbing slowly.
-        public const float SpeedGainPerMeter = 0.0006f;
+        // Speed gained per metre travelled. Noticeable but smooth difficulty climb.
+        public const float SpeedGainPerMeter = 0.004f;
 
         // 1 world unit == this many in-game metres for the distance counter.
         public const float MetersPerWorldUnit = 1.4f;
@@ -26,6 +26,21 @@ namespace PuppyForMom.Core
         public const float MaxHoldTime = 0.28f;
         public const float GroundY = -3.2f;        // resting Y of the puppy
         public const float CoyoteTime = 0.08f;     // grace window to still jump after leaving ground
+
+        // ---- Duck / slide ----
+        public const float DuckColliderWorldHeight = 0.85f;   // crouched hitbox height (world units)
+        public const float DuckColliderTopAboveGround = 0.90f; // crouched hitbox top; must be < HighObstacleClearance
+
+        // ---- Obstacle vertical bands (world units, measured from GroundY) ----
+        public const float HighObstacleClearance = 1.10f;  // bottom of head-height (duck-under) obstacles
+        public const float HighObstacleWorldHeight = 0.60f;
+        public const float LowObstacleWorldHeight = 0.75f;
+
+        // ---- Difficulty ----
+        public const int MetersPerLevel = 100;             // level rises by 1 every 100 m
+        public const float ReactionGapEasy = 1.20f;        // seconds between patterns at level 0
+        public const float ReactionGapHard = 0.55f;        // seconds between patterns at high level
+        public const int ReactionGapMaxLevel = 8;          // level at which gap reaches the hard value
 
         // ---- Spawning ----
         public const float SpawnXOffset = 7f;      // how far right of the camera things appear

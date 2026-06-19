@@ -4,7 +4,7 @@ using PuppyForMom.Systems;
 
 namespace PuppyForMom.Gameplay
 {
-    public enum ObstacleType { Car, Puddle, Bin, Fence, Cone }
+    public enum ObstacleType { Car, Puddle, Bin, Fence, Cone, HighBar }
 
     /// <summary>
     /// A hazard that scrolls left toward the puppy. Touching it ends the run

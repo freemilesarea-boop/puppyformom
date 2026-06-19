@@ -184,7 +184,10 @@ namespace PuppyForMom.UI
             }
             _distance = ServiceLocator.Get<DistanceManager>();
             if (_distance != null)
+            {
                 _distance.OnMetersChanged += HandleMetersChanged;
+                _distance.OnLevelUp += HandleLevelUp;
+            }
         }
 
         private void Unsubscribe()
@@ -200,12 +203,27 @@ namespace PuppyForMom.UI
                 _score.OnBonesChanged -= HandleBonesChanged;
             }
             if (_distance != null)
+            {
                 _distance.OnMetersChanged -= HandleMetersChanged;
+                _distance.OnLevelUp -= HandleLevelUp;
+            }
         }
 
         private void HandleScoreChanged(int s) { if (_scoreText) _scoreText.text = $"Score {s}"; }
         private void HandleBonesChanged(int b) { if (_bonesText) _bonesText.text = b.ToString(); }
-        private void HandleMetersChanged(int m) { if (_distanceText) _distanceText.text = $"{m} m"; }
+
+        private void HandleMetersChanged(int m)
+        {
+            if (!_distanceText) return;
+            int level = _distance != null ? _distance.Level : 0;
+            _distanceText.text = $"{m} m  ·  Lv.{level}";
+        }
+
+        private void HandleLevelUp(int level)
+        {
+            ServiceLocator.Get<AudioManager>()?.Play(Sfx.Milestone);
+            ShowToast($"Lv.{level}");
+        }
 
         private void OnStateChanged(GameState s)
         {
@@ -279,7 +297,7 @@ namespace PuppyForMom.UI
             var dist = ServiceLocator.Get<DistanceManager>();
             if (_scoreText) _scoreText.text = $"Score {(score != null ? score.Score : 0)}";
             if (_bonesText) _bonesText.text = (score != null ? score.Bones : 0).ToString();
-            if (_distanceText) _distanceText.text = $"{(dist != null ? dist.Meters : 0)} m";
+            if (_distanceText) _distanceText.text = $"{(dist != null ? dist.Meters : 0)} m  ·  Lv.{(dist != null ? dist.Level : 0)}";
         }
 
         private void Sfx_Button() => ServiceLocator.Get<AudioManager>()?.Play(Sfx.Button);

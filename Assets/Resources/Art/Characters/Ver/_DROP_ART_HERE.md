@@ -9,6 +9,7 @@ Missing files automatically fall back to the procedural placeholder.
 - `puppy_ver_run_02.png`
 - `puppy_ver_jump.png`
 - `puppy_ver_hit.png`
+- `puppy_ver_duck.png`  (crouched; drawn low in the canvas)
 
 **Recommended size:** ~400 x 360 px (same canvas for every frame, paws at the very bottom)
 **Transparent background:** yes

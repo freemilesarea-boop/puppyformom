@@ -236,6 +236,9 @@ namespace PuppyForMom.Utils
             Color ear = Color.Lerp(body, dark, 0.28f);
             Color fluff = Color.Lerp(body, Color.white, 0.30f);
 
+            if (pose == PuppyPose.Duck)
+                return PuppyDuck(body, legC, ear, fluff, dark);
+
             bool jump = pose == PuppyPose.Jump;
             bool hit = pose == PuppyPose.Hit;
 
@@ -275,6 +278,43 @@ namespace PuppyForMom.Utils
             // nose + snout
             FillCircle(tex, 190, 96, 7, dark);
 
+            return FromTexture(tex);
+        }
+
+        /// <summary>Crouched puppy, drawn low in the canvas so the body sits under head-height obstacles.</summary>
+        private static Sprite PuppyDuck(Color body, Color legC, Color ear, Color fluff, Color dark)
+        {
+            int W = 200, H = 170;
+            var tex = NewTex(W, H);
+
+            // short stubby legs
+            DrawLeg(tex, 70, 8, 34, legC);
+            DrawLeg(tex, 132, 8, 34, legC);
+            // low, stretched body
+            FillRoundedRect(tex, 30, 22, 140, 52, 26, body);
+            FillCircle(tex, 60, 70, 16, fluff); // back fluff
+            // head lowered to the front
+            FillCircle(tex, 158, 60, 36, body);
+            FillTriangle(tex, new Vector2(150, 92), new Vector2(132, 58), new Vector2(168, 70), ear);
+            FillCircle(tex, 156, 44, 14, fluff);
+            // eye looking forward + nose
+            FillCircle(tex, 170, 62, 8, dark);
+            FillCircle(tex, 172, 64, 2, Color.white);
+            FillCircle(tex, 190, 54, 6, dark);
+            return FromTexture(tex);
+        }
+
+        /// <summary>A head-height hanging bar/sign placeholder — the puppy must duck under it.</summary>
+        public static Sprite HighBar()
+        {
+            int W = 220, H = 70; var tex = NewTex(W, H);
+            Color bar = new Color(0.85f, 0.55f, 0.45f);
+            Color edge = Color.Lerp(bar, Color.black, 0.2f);
+            FillRoundedRect(tex, 0, 24, W, 30, 8, bar);
+            FillRoundedRect(tex, 0, 24, W, 6, 3, edge);    // bottom edge accent
+            // little hangers
+            FillRoundedRect(tex, 40, 50, 8, 18, 2, edge);
+            FillRoundedRect(tex, W - 48, 50, 8, 18, 2, edge);
             return FromTexture(tex);
         }
 
@@ -361,5 +401,5 @@ namespace PuppyForMom.Utils
     }
 
     /// <summary>Animation poses for the placeholder/real puppy sprite swap.</summary>
-    public enum PuppyPose { Idle, Run1, Run2, Jump, Hit }
+    public enum PuppyPose { Idle, Run1, Run2, Jump, Hit, Duck }
 }

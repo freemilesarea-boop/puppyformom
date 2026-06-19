@@ -183,12 +183,13 @@ git checkout claude/gallant-cori-00h7h7
 
 | Input | Action |
 |-------|--------|
-| **Tap / Click / Space** | Jump |
-| **Hold** | Jump higher (variable height) |
+| **Left-screen touch / Space / ↑ / Left-mouse** | Jump (hold = jump higher) |
+| **Right-screen touch / ↓ / S / Right-mouse** | Duck / slide (ground only) |
 | **Pause button / Esc / Android Back** | Pause |
 
-The puppy auto-runs; you only control jumping. Avoid cars, puddles, bins, fences
-and cones. Collect:
+The puppy auto-runs; you **jump** over ground obstacles and **duck** under
+head-height ones. Avoid cars, puddles, bins, fences, cones and overhead bars.
+Collect:
 
 - 🦴 **Bones** → score
 - 💨 **Mom's scent** → story flavour
@@ -270,6 +271,37 @@ exact command and platform paths.
 ### Build for iOS
 - `File → Build Settings → iOS → Switch Platform → Build` → open the generated
   Xcode project, set your signing team, and run.
+
+---
+
+## 🎚️ Difficulty & obstacle patterns
+
+**Difficulty level** rises by 1 every **100 m** (`DistanceManager.Level = meters / 100`),
+shown in the HUD as `123 m · Lv.1` with a level-up toast.
+
+As the level rises:
+- **Speed** ramps continuously: `speed = min(14, 6 + meters × 0.004)` (units/sec).
+- **Patterns appear closer together** — the reaction gap shrinks from
+  `1.20 s` (Lv 0) to `0.55 s` (Lv 8+): `gap = lerp(1.20, 0.55, level/8)`.
+- **Pattern mix changes** (weighted random; weights by level):
+
+| Pattern | Avoid by | Appears from | Weight trend |
+|---------|----------|--------------|--------------|
+| **SafeGap** (breather + treats) | — | 0 m | high early → min 1 |
+| **GroundObstacle** (car/bin/fence/cone) | jump | 0 m | constant (3) |
+| **LowObstacle** (puddle/short cone) | jump | 0 m | constant (2) |
+| **CollectibleLine** (row of bones) | — | **100 m** (Lv 1) | 3 |
+| **HighObstacle** (overhead bar) | **duck** | **200 m** (Lv 2) | rises to 3 |
+| **MixedPattern** (jump → then duck) | jump + duck | **300 m** (Lv 3) | rises to 4 |
+
+**Fairness guarantees**
+- First **100 m** is easy ground/low obstacles with frequent SafeGaps.
+- Every pattern is followed by a reaction gap (above) → never back-to-back walls.
+- **MixedPattern** spaces its jump obstacle and the following duck-bar by a full
+  jump arc (`2·v/g · speed + margin`) so the dog always lands before it must duck —
+  no "air obstacle right after a jump" instant-deaths.
+- High bars sit at head height (`GroundY + 1.10`); the **ducked** collider top is
+  `GroundY + 0.90`, so ducking always clears them while standing always hits.
 
 ---
 

@@ -111,6 +111,7 @@ namespace PuppyForMom.Utils
         public const string StateRun02 = "run_02";
         public const string StateJump = "jump";
         public const string StateHit = "hit";
+        public const string StateDuck = "duck";
 
         // Obstacles
         public const string ObstacleCar = "Obstacles/obstacle_car";
@@ -118,6 +119,7 @@ namespace PuppyForMom.Utils
         public const string ObstacleTrashBin = "Obstacles/obstacle_trash_bin";
         public const string ObstacleFence = "Obstacles/obstacle_fence";
         public const string ObstacleCone = "Obstacles/obstacle_cone";
+        public const string ObstacleHighBar = "Obstacles/obstacle_high_bar"; // head-height, duck under
 
         // Collectibles
         public const string CollectibleBone = "Collectibles/collectible_bone";

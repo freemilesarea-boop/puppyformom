@@ -73,6 +73,33 @@ Check items off as you go. Nothing here requires real ad/IAP SDKs (all mocked).
 - [ ] Bones increment the **bone counter**; collecting plays a blip + pops.
 - [ ] Scent / photo-piece collectibles can be picked up without error.
 
+## 3b. Controls, duck & difficulty (new)
+**Controls**
+- [ ] **Left-screen touch** (or **Space / ↑ / Left-mouse**) makes the puppy **jump**.
+- [ ] **Right-screen touch** (or **↓ / S / Right-mouse**) makes the puppy **duck**.
+- [ ] PC inputs all work in the Editor (mouse + keyboard).
+- [ ] While ducking, the puppy uses the crouched (lower) sprite and its **collider
+      becomes shorter**; releasing returns it to the standing collider.
+- [ ] Ducking in the **air does nothing** (duck only works while grounded).
+- [ ] Pressing jump while ducking cancels the duck and jumps.
+
+**New obstacle patterns**
+- [ ] **GroundObstacle / LowObstacle** are cleared by **jumping**.
+- [ ] **HighObstacle** (overhead bar) is cleared by **ducking**; running into it
+      while standing ends the run.
+- [ ] **CollectibleLine** spawns a row of bones to grab.
+- [ ] **MixedPattern** = a jump obstacle then a duck bar, with enough space to land
+      first (jump → duck), never an instant-death.
+- [ ] **SafeGap** gives a calm breather (no hazard, a couple of treats).
+
+**Difficulty**
+- [ ] HUD shows `… m · Lv.N`; the level increases **every 100 m** with a `Lv.N` toast.
+- [ ] Speed clearly increases as distance grows.
+- [ ] Patterns get more frequent and more varied at higher levels (high/mixed appear).
+- [ ] First **100 m** is easy (ground/low + frequent safe gaps).
+- [ ] No impossible patterns: never two opposite-action hazards at the same spot,
+      and never a duck-bar landing on you immediately after a forced jump.
+
 ## 4. Difficulty & speed
 - [ ] Scroll speed slowly increases the further you travel (harder over time).
 - [ ] Spawn cadence tightens with distance but stays clearable.

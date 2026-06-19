@@ -7,22 +7,20 @@ using PuppyForMom.Utils;
 namespace PuppyForMom.Player
 {
     /// <summary>
-    /// The puppy. Stays at a fixed X while the world scrolls past; the player only controls
-    /// jumping. Tap = jump, keep holding = jump higher (variable height). Uses a kinematic
-    /// Rigidbody2D so trigger callbacks fire against obstacles and collectibles.
+    /// The puppy. Auto-runs at a fixed X while the world scrolls past. Controls:
+    ///   • Jump  — left-screen touch / Space / Up / Left-mouse (hold = jump higher)
+    ///   • Duck  — right-screen touch / Down / S / Right-mouse (hold to stay crouched; ground only)
     ///
-    /// Renders a full-body side-view sprite and swaps it per state (idle / 2-frame run /
-    /// jump / hit). Real PNGs are loaded via <see cref="AssetLoader"/>; if absent, a
-    /// procedural <see cref="SpriteFactory"/> placeholder is used so it always renders.
+    /// Clear states: Run, Jump, Duck, Hit. Ducking lowers the collider so head-height
+    /// obstacles pass over; it is ignored in the air. Sprites are real PNGs via
+    /// <see cref="AssetLoader"/> with a <see cref="SpriteFactory"/> placeholder fallback.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(SpriteRenderer))]
     public class PlayerController : MonoBehaviour
     {
-        // Visual target so the whole dog is comfortably visible on a portrait screen,
-        // independent of the source PNG resolution. (Single source of truth in GameConfig.)
         private const float TargetHeight = GameConfig.CharacterWorldHeight;
-        private const float RunFrameTime = 0.12f; // seconds per run frame (simple 2-frame loop)
+        private const float RunFrameTime = 0.12f;
 
         private float _verticalVelocity;
         private bool _grounded = true;
@@ -30,11 +28,15 @@ namespace PuppyForMom.Player
         private bool _isJumping;
         private float _holdTime;
         private bool _dead;
+        private bool _ducking;
         private int _invincibleFrames;
         private float _restingY;
 
         private SpriteRenderer _sr;
-        private Sprite _idle, _run1, _run2, _jump, _hit;
+        private CapsuleCollider2D _capsule;
+        private Vector2 _standSize, _standOffset, _duckSize, _duckOffset;
+
+        private Sprite _idle, _run1, _run2, _jump, _hit, _duck;
         private PuppyPose _currentPose = (PuppyPose)(-1);
         private float _runTimer;
         private bool _runFrameA;
@@ -47,6 +49,7 @@ namespace PuppyForMom.Player
 
             _sr = GetComponent<SpriteRenderer>();
             _sr.sortingOrder = 10;
+            _capsule = GetComponent<CapsuleCollider2D>();
 
             LoadSprites();
             NormalizeSizeAndCollider();
@@ -58,10 +61,12 @@ namespace PuppyForMom.Player
         private void OnEnable()
         {
             _dead = false;
+            _ducking = false;
             _verticalVelocity = 0f;
             _grounded = true;
             var p = transform.position;
             transform.position = new Vector3(p.x, _restingY, p.z);
+            ApplyColliderForState();
         }
 
         private void LoadSprites()
@@ -75,24 +80,36 @@ namespace PuppyForMom.Player
             _run2 = AssetLoader.Get(ArtKeys.Puppy(skin, ArtKeys.StateRun02), () => SpriteFactory.PuppyBody(color, PuppyPose.Run2));
             _jump = AssetLoader.Get(ArtKeys.Puppy(skin, ArtKeys.StateJump), () => SpriteFactory.PuppyBody(color, PuppyPose.Jump));
             _hit = AssetLoader.Get(ArtKeys.Puppy(skin, ArtKeys.StateHit), () => SpriteFactory.PuppyBody(color, PuppyPose.Hit));
+            _duck = AssetLoader.Get(ArtKeys.Puppy(skin, ArtKeys.StateDuck), () => SpriteFactory.PuppyBody(color, PuppyPose.Duck));
         }
 
-        /// <summary>Scale the GO so the dog is ~TargetHeight tall regardless of PNG size, and fit the collider.</summary>
+        /// <summary>Scale so the dog is ~TargetHeight tall regardless of PNG size, and build stand/duck colliders.</summary>
         private void NormalizeSizeAndCollider()
         {
             if (_idle == null) return;
-            float h = _idle.bounds.size.y;
-            float scale = h > 0.0001f ? TargetHeight / h : 1f;
+            var b = _idle.bounds;
+            float scale = b.size.y > 0.0001f ? TargetHeight / b.size.y : 1f;
             transform.localScale = new Vector3(scale, scale, 1f);
 
-            var cap = GetComponent<CapsuleCollider2D>();
-            if (cap != null)
-            {
-                cap.direction = CapsuleDirection2D.Horizontal;
-                cap.size = new Vector2(_idle.bounds.size.x * 0.60f, _idle.bounds.size.y * 0.82f);
-                cap.offset = _idle.bounds.center;
-                cap.isTrigger = false;
-            }
+            if (_capsule == null) return;
+            _capsule.direction = CapsuleDirection2D.Vertical;
+            _capsule.isTrigger = false;
+
+            // Standing hitbox (local space; gets multiplied by transform scale).
+            _standSize = new Vector2(b.size.x * 0.55f, b.size.y * 0.82f);
+            _standOffset = b.center;
+
+            // Ducked hitbox: lower & shorter so head-height obstacles pass over.
+            // Expressed in world units, then converted to local (divide by scale).
+            float duckWorldH = GameConfig.DuckColliderWorldHeight;
+            float restingAbove = TargetHeight * 0.5f;
+            float centerAbove = GameConfig.DuckColliderTopAboveGround - duckWorldH * 0.5f;
+            float offsetWorldY = centerAbove - restingAbove;
+            _duckSize = new Vector2(b.size.x * 0.72f, duckWorldH / scale);
+            _duckOffset = new Vector2(b.center.x, offsetWorldY / scale);
+
+            _capsule.size = _standSize;
+            _capsule.offset = _standOffset;
         }
 
         private void Update()
@@ -100,13 +117,11 @@ namespace PuppyForMom.Player
             var gm = GameManager.Instance;
             if (gm == null) return;
 
-            bool pointerDown = PointerDown();
-            bool pointerHeld = PointerHeld();
-
-            // Ready: first tap starts the run (and does the first jump). Skip the rest this frame.
+            // Ready: first input starts the run (jump-side jumps, duck-side just begins).
             if (gm.State == GameState.Ready)
             {
-                if (pointerDown) { gm.BeginPlayingIfReady(); TryJump(); }
+                if (JumpDown()) { gm.BeginPlayingIfReady(); TryJump(); }
+                else if (DuckDown()) { gm.BeginPlayingIfReady(); }
                 UpdateAnimation(gm.State);
                 return;
             }
@@ -114,19 +129,21 @@ namespace PuppyForMom.Player
             if (gm.State == GameState.Playing && !_dead)
             {
                 if (_invincibleFrames > 0) _invincibleFrames--;
-                HandleInput(pointerDown, pointerHeld);
+                HandleJump();
+                HandleDuck();
                 ApplyGravityAndMove();
+                ApplyColliderForState();
             }
 
             UpdateAnimation(gm.State);
             UpdateInvincibilityBlink();
         }
 
-        private void HandleInput(bool pointerDown, bool pointerHeld)
+        private void HandleJump()
         {
-            if (pointerDown) TryJump();
+            if (JumpDown()) TryJump();
 
-            if (_isJumping && pointerHeld && _holdTime < GameConfig.MaxHoldTime)
+            if (_isJumping && JumpHeld() && _holdTime < GameConfig.MaxHoldTime)
             {
                 _verticalVelocity += GameConfig.HoldJumpForce * Time.deltaTime;
                 _holdTime += Time.deltaTime;
@@ -137,10 +154,17 @@ namespace PuppyForMom.Player
             }
         }
 
+        private void HandleDuck()
+        {
+            // Duck only while grounded; ignored in the air.
+            _ducking = _grounded && !_isJumping && DuckHeld();
+        }
+
         private void TryJump()
         {
             bool canJump = _grounded || _timeSinceGrounded <= GameConfig.CoyoteTime;
             if (!canJump) return;
+            _ducking = false; // jumping cancels a duck
             _verticalVelocity = GameConfig.JumpVelocity;
             _grounded = false;
             _isJumping = true;
@@ -168,12 +192,21 @@ namespace PuppyForMom.Player
             transform.position = pos;
         }
 
-        // ---------------- Animation (sprite swap, simple 2-frame run) ----------------
+        private void ApplyColliderForState()
+        {
+            if (_capsule == null) return;
+            bool duckBox = _ducking && _grounded;
+            _capsule.size = duckBox ? _duckSize : _standSize;
+            _capsule.offset = duckBox ? _duckOffset : _standOffset;
+        }
+
+        // ---------------- Animation ----------------
         private void UpdateAnimation(GameState state)
         {
             PuppyPose pose;
             if (_dead) pose = PuppyPose.Hit;
             else if (!_grounded) pose = PuppyPose.Jump;
+            else if (_ducking) pose = PuppyPose.Duck;
             else if (state == GameState.Playing)
             {
                 _runTimer += Time.deltaTime;
@@ -195,6 +228,7 @@ namespace PuppyForMom.Player
                 PuppyPose.Run2 => _run2,
                 PuppyPose.Jump => _jump,
                 PuppyPose.Hit => _hit,
+                PuppyPose.Duck => _duck,
                 _ => _idle
             };
         }
@@ -234,7 +268,9 @@ namespace PuppyForMom.Player
         private void Die()
         {
             _dead = true;
+            _ducking = false;
             _verticalVelocity = 0f;
+            ApplyColliderForState();
             SetPose(PuppyPose.Hit, force: true);
             ServiceLocator.Get<AudioManager>()?.Play(Sfx.Hit);
             GameManager.Instance?.PlayerDied();
@@ -251,21 +287,35 @@ namespace PuppyForMom.Player
 
         public bool IsInvincible => _invincibleFrames > 0;
 
-        // ---------------- Input abstraction (legacy Input, touch + mouse) ----------------
-        private static bool PointerDown()
+        // ---------------- Input (legacy Input: touch sides + mouse + keyboard) ----------------
+        private static bool TouchOnSide(bool leftSide, bool beganOnly)
         {
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) return true;
-            return Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space);
+            int n = Input.touchCount;
+            for (int i = 0; i < n; i++)
+            {
+                var t = Input.GetTouch(i);
+                bool left = t.position.x < Screen.width * 0.5f;
+                if (left != leftSide) continue;
+                if (beganOnly) { if (t.phase == TouchPhase.Began) return true; }
+                else if (t.phase != TouchPhase.Ended && t.phase != TouchPhase.Canceled) return true;
+            }
+            return false;
         }
 
-        private static bool PointerHeld()
-        {
-            if (Input.touchCount > 0)
-            {
-                var ph = Input.GetTouch(0).phase;
-                return ph == TouchPhase.Stationary || ph == TouchPhase.Moved || ph == TouchPhase.Began;
-            }
-            return Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
-        }
+        private static bool JumpDown() =>
+            TouchOnSide(true, true) || Input.GetMouseButtonDown(0) ||
+            Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.UpArrow);
+
+        private static bool JumpHeld() =>
+            TouchOnSide(true, false) || Input.GetMouseButton(0) ||
+            Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow);
+
+        private static bool DuckDown() =>
+            TouchOnSide(false, true) || Input.GetMouseButtonDown(1) ||
+            Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S);
+
+        private static bool DuckHeld() =>
+            TouchOnSide(false, false) || Input.GetMouseButton(1) ||
+            Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S);
     }
 }

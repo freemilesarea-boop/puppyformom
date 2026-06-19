@@ -14,10 +14,15 @@ namespace PuppyForMom.Systems
         public int Meters { get; private set; }
         public float CurrentSpeed { get; private set; }
 
+        /// <summary>Difficulty level — rises by 1 every <see cref="GameConfig.MetersPerLevel"/> metres.</summary>
+        public int Level { get; private set; }
+
         /// <summary>Fired when the integer metre value changes.</summary>
         public event Action<int> OnMetersChanged;
         /// <summary>Fired once when a milestone metre threshold is first crossed.</summary>
         public event Action<int> OnMilestoneReached;
+        /// <summary>Fired when the difficulty level increases.</summary>
+        public event Action<int> OnLevelUp;
 
         private bool _running;
         private bool _milestone1, _milestone2, _milestone3, _cutscene, _ending;
@@ -29,6 +34,7 @@ namespace PuppyForMom.Systems
         {
             DistanceUnits = 0f;
             Meters = 0;
+            Level = 0;
             CurrentSpeed = GameConfig.StartScrollSpeed;
             _running = false;
             _milestone1 = _milestone2 = _milestone3 = _cutscene = _ending = false;
@@ -53,6 +59,10 @@ namespace PuppyForMom.Systems
                 Meters = newMeters;
                 OnMetersChanged?.Invoke(Meters);
                 ServiceLocator.Get<ScoreManager>()?.Recompute(Meters);
+
+                int newLevel = Meters / GameConfig.MetersPerLevel;
+                if (newLevel != Level) { Level = newLevel; OnLevelUp?.Invoke(Level); }
+
                 CheckMilestones();
             }
         }
