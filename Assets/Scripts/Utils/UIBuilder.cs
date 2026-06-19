@@ -116,7 +116,7 @@ namespace PuppyForMom.Utils
 
             var img = rt.gameObject.AddComponent<Image>();
             // Use ui_button.png (9-sliced) when available; the color still tints it. Solid otherwise.
-            var btnSprite = AssetLoader.Get(ArtKeys.UiButton, () => (Sprite)null);
+            var btnSprite = AssetLoader.GetOptional(ArtKeys.UiButton);
             if (btnSprite != null) { img.sprite = btnSprite; img.type = Image.Type.Sliced; }
             img.color = bg;
             var btn = rt.gameObject.AddComponent<Button>();

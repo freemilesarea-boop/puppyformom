@@ -27,7 +27,7 @@ namespace PuppyForMom.Gameplay
             _width = spanRight - spanLeft;
 
             // The road surface sits just below the ground line; the puppy's feet rest at GroundY.
-            var road = AssetLoader.Get(ArtKeys.BgRoad, () => (Sprite)null);
+            var road = AssetLoader.GetOptional(ArtKeys.BgRoad);
             if (road != null)
                 BuildRoadTiles(road);
             else

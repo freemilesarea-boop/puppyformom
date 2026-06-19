@@ -53,7 +53,7 @@ namespace PuppyForMom.UI
             var canvas = UIBuilder.CreateCanvas("Menu_Canvas").transform;
 
             // Optional logo image (ui_logo.png). When absent, the text title below is the title.
-            var logo = AssetLoader.Get(ArtKeys.UiLogo, () => (Sprite)null);
+            var logo = AssetLoader.GetOptional(ArtKeys.UiLogo);
             if (logo != null)
             {
                 var rt = UIBuilder.AddRect(canvas, "Logo");
