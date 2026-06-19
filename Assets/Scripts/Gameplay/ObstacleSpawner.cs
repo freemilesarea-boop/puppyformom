@@ -29,14 +29,15 @@ namespace PuppyForMom.Gameplay
 
         private void BuildSprites()
         {
-            _car = SpriteFactory.SolidRounded(GameConfig.ObstacleCar, 180, 95, 20);
-            _puddle = SpriteFactory.SolidRounded(GameConfig.ObstaclePuddle, 150, 38, 18);
-            _bin = SpriteFactory.SolidRounded(GameConfig.ObstacleBin, 70, 100, 12);
-            _fence = SpriteFactory.SolidRounded(GameConfig.ObstacleFence, 95, 115, 8);
-            _cone = SpriteFactory.SolidRounded(GameConfig.ObstacleCone, 65, 95, 14);
-            _bone = SpriteFactory.Bone();
-            _smell = SpriteFactory.Smell();
-            _photo = SpriteFactory.PhotoPiece();
+            // Real PNG if present in Resources/Art, otherwise the procedural placeholder.
+            _car = AssetLoader.Get(ArtKeys.ObstacleCar, () => SpriteFactory.SolidRounded(GameConfig.ObstacleCar, 180, 95, 20));
+            _puddle = AssetLoader.Get(ArtKeys.ObstaclePuddle, () => SpriteFactory.SolidRounded(GameConfig.ObstaclePuddle, 150, 38, 18));
+            _bin = AssetLoader.Get(ArtKeys.ObstacleTrashBin, () => SpriteFactory.SolidRounded(GameConfig.ObstacleBin, 70, 100, 12));
+            _fence = AssetLoader.Get(ArtKeys.ObstacleFence, () => SpriteFactory.SolidRounded(GameConfig.ObstacleFence, 95, 115, 8));
+            _cone = AssetLoader.Get(ArtKeys.ObstacleCone, () => SpriteFactory.SolidRounded(GameConfig.ObstacleCone, 65, 95, 14));
+            _bone = AssetLoader.Get(ArtKeys.CollectibleBone, () => SpriteFactory.Bone());
+            _smell = AssetLoader.Get(ArtKeys.CollectibleScent, () => SpriteFactory.Smell());
+            _photo = AssetLoader.Get(ArtKeys.CollectiblePhotoPiece, () => SpriteFactory.PhotoPiece());
         }
 
         private void Update()

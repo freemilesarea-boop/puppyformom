@@ -14,7 +14,9 @@ namespace PuppyForMom.Gameplay
     /// </summary>
     public class GameplayBootstrap : MonoBehaviour
     {
-        private const float PlayerX = -3.2f;
+        // Left-of-centre so obstacles (coming from the right) give good reaction time,
+        // while staying well inside the narrow portrait view.
+        private const float PlayerX = -1.6f;
 
         private void Awake()
         {
@@ -45,9 +47,9 @@ namespace PuppyForMom.Gameplay
                 cam = camGo.AddComponent<Camera>();
             }
             cam.orthographic = true;
-            cam.orthographicSize = 6f;          // portrait: ~12 units tall
+            cam.orthographicSize = 5.6f;        // portrait framing: dog + ground clearly visible
             cam.backgroundColor = GameConfig.SkyBottom;
-            cam.transform.position = new Vector3(0f, 0.5f, -10f);
+            cam.transform.position = new Vector3(0f, 0.4f, -10f);
         }
 
         private void BuildWorld()
@@ -63,22 +65,13 @@ namespace PuppyForMom.Gameplay
 
         private void CreatePlayer()
         {
-            var save = ServiceLocator.Get<SaveManager>();
-            string skin = save != null ? save.SelectedSkin : "Loui";
-            Color color = skin == "Ver" ? GameConfig.PuppyBlack : GameConfig.PuppyCream;
-
+            // PlayerController loads its own (real or placeholder) sprites, normalises its size
+            // so the full body is visible, and fits the capsule collider to the art.
             var go = new GameObject("Puppy");
             go.transform.position = new Vector3(PlayerX, GameConfig.GroundY, 0f);
-            go.transform.localScale = Vector3.one * 1.1f;
 
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = SpriteFactory.Puppy(color);
-            sr.sortingOrder = 10;
-
-            var col = go.AddComponent<CircleCollider2D>();
-            col.radius = 0.42f;
-            col.isTrigger = false;
-
+            go.AddComponent<SpriteRenderer>();
+            go.AddComponent<CapsuleCollider2D>();   // sized by PlayerController
             go.AddComponent<PlayerController>();
         }
     }

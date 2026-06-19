@@ -111,7 +111,32 @@ Check items off as you go. Nothing here requires real ad/IAP SDKs (all mocked).
       "DontDestroyOnLoad" expanded).
 - [ ] No `MissingReferenceException` spam after scene changes.
 
-## 10. Build smoke test (optional)
+## 10. Art pipeline (placeholder ↔ real PNG swap)
+> See README → "Art pipeline" for folder paths, sizes and import settings.
+
+**Without any PNGs (default state):**
+- [ ] Game runs with procedural placeholders — **no errors** about missing art.
+- [ ] The puppy is a **full-body side-view** dog (not just a face), fully visible
+      on screen with paws on the ground.
+- [ ] Running shows a simple **2-frame leg animation**; jumping shows the **jump**
+      pose; hitting an obstacle shows the **hit** pose.
+- [ ] Obstacles look **different per type** (car / puddle / bin / fence / cone).
+- [ ] Collectibles look **different per type** (bone / scent / photo piece).
+- [ ] Background shows distinct **parallax layers** (sky, clouds, city, trees, road)
+      moving at different speeds.
+
+**After dropping in real PNGs:**
+- [ ] Put e.g. `Assets/Resources/Art/Characters/Loui/puppy_loui_idle.png` (Texture
+      Type = **Sprite**) → re-enter Play → the **real image** is used automatically.
+- [ ] Add `Assets/Resources/Art/Obstacles/obstacle_car.png` → cars now use it; other
+      obstacles still fall back to placeholders (mixed state works).
+- [ ] Add a `bg_*` image → that background layer shows the real art and still scrolls.
+- [ ] Add `ui_bone_icon.png` / `ui_button.png` → HUD bone icon / buttons use them.
+- [ ] Remove a PNG → it cleanly reverts to the placeholder (no errors).
+- [ ] A character PNG of a **different resolution** still appears the correct on-screen
+      size (auto-normalised height), with the collider fitting the body.
+
+## 11. Build smoke test (optional)
 - [ ] `File → Build Settings → Android → Switch Platform` succeeds.
 - [ ] `Build And Run` to an Android emulator/device launches in **portrait** and
       is playable with touch.
@@ -120,7 +145,8 @@ Check items off as you go. Nothing here requires real ad/IAP SDKs (all mocked).
 ---
 
 ### Known MVP limitations (expected, not bugs)
-- Art & SFX are procedural placeholders.
+- Art & SFX are procedural placeholders **until** real PNGs are dropped into
+  `Assets/Resources/Art/...` (see README → Art pipeline).
 - Ads & IAP are **mocked** (logs + delays), not real SDKs.
 - Render pipeline is built-in 2D (URP intentionally not enabled yet).
 - Korean glyphs rely on system-font fallback unless a TMP Korean font is added.

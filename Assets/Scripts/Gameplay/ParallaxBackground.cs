@@ -7,73 +7,103 @@ using PuppyForMom.Utils;
 namespace PuppyForMom.Gameplay
 {
     /// <summary>
-    /// Builds a warm pastel sky and a slow-moving cloud layer for a calm, "healing" backdrop.
-    /// Clouds scroll at a fraction of the world speed for depth.
+    /// Builds the layered, scrolling backdrop: sky (static), then clouds / city / trees as
+    /// horizontally-tiled parallax layers moving at increasing speeds for depth.
+    ///
+    /// Each layer uses a real PNG from <see cref="AssetLoader"/> when available, and falls back
+    /// to a procedural <see cref="SpriteFactory"/> strip otherwise — so it always renders and
+    /// real art drops in with no code changes.
     /// </summary>
     public class ParallaxBackground : MonoBehaviour
     {
-        [SerializeField] private float spanLeft = -10f;
-        [SerializeField] private float spanRight = 10f;
-        [SerializeField] private float cloudParallax = 0.15f;
+        [SerializeField] private float spanLeft = -9f;
+        [SerializeField] private float spanRight = 9f;
 
-        private readonly List<Transform> _clouds = new List<Transform>();
-        private float _width;
+        private struct Layer
+        {
+            public List<Transform> tiles;
+            public float factor;     // fraction of world speed
+            public float tileWidth;
+            public float leftLimit;
+            public float span;
+        }
+
+        private readonly List<Layer> _layers = new List<Layer>();
 
         private void Start()
         {
-            _width = spanRight - spanLeft;
-            CreateSky();
-            CreateClouds();
-            CreateHills();
+            BuildSky();
+            // bottomY anchors the strip's base; clouds float high in the sky.
+            BuildTiledLayer(AssetLoader.Get(ArtKeys.BgClouds, SpriteFactory.CloudStrip), bottomY: 2.4f, worldHeight: 2.4f, factor: 0.10f, order: -16);
+            BuildTiledLayer(AssetLoader.Get(ArtKeys.BgCity, SpriteFactory.CityStrip), bottomY: GameConfig.GroundY, worldHeight: 3.2f, factor: 0.25f, order: -12);
+            BuildTiledLayer(AssetLoader.Get(ArtKeys.BgTrees, SpriteFactory.TreeStrip), bottomY: GameConfig.GroundY, worldHeight: 2.3f, factor: 0.45f, order: -8);
         }
 
-        private void CreateSky()
+        private void BuildSky()
         {
-            var sky = NewSprite("Sky",
-                SpriteFactory.VerticalGradient(GameConfig.SkyTop, GameConfig.SkyBottom),
-                sortingOrder: -20);
-            // stretch to comfortably cover a portrait camera
-            sky.transform.position = new Vector3(0f, 1.5f, 0f);
-            sky.transform.localScale = new Vector3(26f, 16f, 1f);
+            var sky = AssetLoader.Get(ArtKeys.BgSky,
+                () => SpriteFactory.VerticalGradient(GameConfig.SkyTop, GameConfig.SkyBottom));
+            if (sky == null) return;
+
+            var go = NewSprite("Sky", sky, -20);
+            go.transform.position = new Vector3(0f, 1.5f, 0f);
+            // stretch to comfortably cover a portrait camera regardless of source size
+            float sx = (spanRight - spanLeft + 8f) / sky.bounds.size.x;
+            float sy = 18f / sky.bounds.size.y;
+            go.transform.localScale = new Vector3(sx, sy, 1f);
         }
 
-        private void CreateHills()
+        /// <summary>Tiles a single sprite across the view and registers it for parallax scrolling.</summary>
+        private void BuildTiledLayer(Sprite sprite, float bottomY, float worldHeight, float factor, int order)
         {
-            var hillSprite = SpriteFactory.Circle(new Color(0.86f, 0.92f, 0.74f), 64);
-            for (int i = 0; i < 5; i++)
+            if (sprite == null) return;
+
+            float scale = worldHeight / sprite.bounds.size.y;
+            float tileW = sprite.bounds.size.x * scale;
+            if (tileW < 0.01f) return;
+
+            float yCenter = bottomY + worldHeight * 0.5f;
+            int count = Mathf.CeilToInt((spanRight - spanLeft) / tileW) + 2;
+
+            var root = new GameObject($"Layer_{order}").transform;
+            root.SetParent(transform, false);
+
+            var tiles = new List<Transform>(count);
+            for (int i = 0; i < count; i++)
             {
-                var h = NewSprite("Hill", hillSprite, sortingOrder: -10);
-                h.transform.position = new Vector3(spanLeft + i * (_width / 4f), GameConfig.GroundY - 1.5f, 0f);
-                h.transform.localScale = new Vector3(Random.Range(5f, 8f), Random.Range(3f, 4.5f), 1f);
+                var go = NewSprite("tile", sprite, order);
+                go.transform.SetParent(root, false);
+                go.transform.localScale = new Vector3(scale, scale, 1f);
+                go.transform.position = new Vector3(spanLeft + i * tileW, yCenter, 0f);
+                tiles.Add(go.transform);
             }
-        }
 
-        private void CreateClouds()
-        {
-            var cloudSprite = SpriteFactory.Cloud();
-            for (int i = 0; i < 4; i++)
+            _layers.Add(new Layer
             {
-                var c = NewSprite("Cloud", cloudSprite, sortingOrder: -15);
-                c.transform.position = new Vector3(
-                    spanLeft + i * (_width / 3f),
-                    Random.Range(2.5f, 5.5f), 0f);
-                c.transform.localScale = Vector3.one * Random.Range(0.8f, 1.6f);
-                _clouds.Add(c.transform);
-            }
+                tiles = tiles,
+                factor = factor,
+                tileWidth = tileW,
+                leftLimit = spanLeft - tileW,
+                span = tileW * count
+            });
         }
 
         private void Update()
         {
             var gm = GameManager.Instance;
             if (gm == null || gm.State != GameState.Playing) return;
-            float speed = (ServiceLocator.Get<DistanceManager>()?.CurrentSpeed ?? GameConfig.StartScrollSpeed) * cloudParallax;
+            float speed = ServiceLocator.Get<DistanceManager>()?.CurrentSpeed ?? GameConfig.StartScrollSpeed;
 
-            foreach (var c in _clouds)
+            foreach (var layer in _layers)
             {
-                var p = c.position;
-                p.x -= speed * Time.deltaTime;
-                if (p.x < spanLeft - 2f) p.x += _width + 4f;
-                c.position = p;
+                float dx = speed * layer.factor * Time.deltaTime;
+                foreach (var t in layer.tiles)
+                {
+                    var p = t.position;
+                    p.x -= dx;
+                    if (p.x < layer.leftLimit) p.x += layer.span;
+                    t.position = p;
+                }
             }
         }
 

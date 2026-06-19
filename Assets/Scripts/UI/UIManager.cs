@@ -61,7 +61,7 @@ namespace PuppyForMom.UI
             icon.anchoredPosition = new Vector2(-300, -78);
             icon.sizeDelta = new Vector2(70, 40);
             var iconImg = icon.gameObject.AddComponent<Image>();
-            iconImg.sprite = SpriteFactory.Bone();
+            iconImg.sprite = AssetLoader.Get(ArtKeys.UiBoneIcon, () => SpriteFactory.Bone());
             iconImg.preserveAspect = true;
             iconImg.raycastTarget = false;
 

@@ -42,7 +42,8 @@ namespace PuppyForMom.UI
                 cam.backgroundColor = new Color(1f, 0.85f, 0.7f);
             }
 
-            MakeSprite("Sky", SpriteFactory.VerticalGradient(new Color(1f, 0.78f, 0.6f), new Color(1f, 0.93f, 0.82f)),
+            MakeSprite("Sky",
+                AssetLoader.Get(ArtKeys.BgSky, () => SpriteFactory.VerticalGradient(new Color(1f, 0.78f, 0.6f), new Color(1f, 0.93f, 0.82f))),
                 new Vector3(0, 0, 0), new Vector3(26, 16, 1), -20);
             MakeSprite("Ground", SpriteFactory.SolidRounded(GameConfig.GroundColor, 64, 64, 0),
                 new Vector3(0, -6.5f, 0), new Vector3(28, 6, 1), -5);
@@ -51,11 +52,14 @@ namespace PuppyForMom.UI
             string skinName = save != null ? save.SelectedSkin : "Loui";
             Color puppyColor = skinName == "Ver" ? GameConfig.PuppyBlack : GameConfig.PuppyCream;
 
-            MakeSprite("Puppy", SpriteFactory.Puppy(puppyColor),
-                new Vector3(-2f, -2.4f, 0), new Vector3(2.8f, 2.8f, 1), 1);
-            // "Mom" is a bigger puppy
-            MakeSprite("Mom", SpriteFactory.Puppy(GameConfig.PuppyCream),
-                new Vector3(2f, -1.8f, 0), new Vector3(4.2f, 4.2f, 1), 1);
+            // full-body reunion (real PNGs when available)
+            MakeSprite("Puppy",
+                AssetLoader.Get(ArtKeys.Puppy(skinName, ArtKeys.StateIdle), () => SpriteFactory.PuppyBody(puppyColor, PuppyPose.Idle)),
+                new Vector3(-2f, -2.4f, 0), new Vector3(1.8f, 1.8f, 1), 1);
+            // "Mom" is a bigger cream puppy
+            MakeSprite("Mom",
+                AssetLoader.Get(ArtKeys.Puppy("Loui", ArtKeys.StateIdle), () => SpriteFactory.PuppyBody(GameConfig.PuppyCream, PuppyPose.Idle)),
+                new Vector3(2f, -2.0f, 0), new Vector3(2.7f, 2.7f, 1), 1);
 
             for (int i = 0; i < 6; i++)
             {

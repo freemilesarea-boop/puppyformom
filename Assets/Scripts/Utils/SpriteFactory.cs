@@ -198,5 +198,168 @@ namespace PuppyForMom.Utils
             FillRoundedRect(tex, 20, 8, 80, 18, 8, c);
             return FromTexture(tex);
         }
+
+        // ---------- full-body side-view puppy (placeholder, replaced by real PNGs) ----------
+
+        private static void DrawLeg(Texture2D tex, int cx, int yBottom, int yTop, Color c)
+        {
+            FillRoundedRect(tex, cx - 8, yBottom, 16, yTop - yBottom, 6, c);
+            FillCircle(tex, cx, yBottom, 8, c); // paw
+        }
+
+        private static void DrawLine(Texture2D tex, int x0, int y0, int x1, int y1, Color c, int thick = 2)
+        {
+            int dx = Mathf.Abs(x1 - x0), dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+            while (true)
+            {
+                FillCircle(tex, x0, y0, thick, c);
+                if (x0 == x1 && y0 == y1) break;
+                int e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x0 += sx; }
+                if (e2 < dx) { err += dx; y0 += sy; }
+            }
+        }
+
+        /// <summary>
+        /// A cute full-body Pomeranian in side view (facing right), with legs/ears/tail and a
+        /// big expressive eye. Pose changes the legs / expression for idle, 2-frame run, jump, hit.
+        /// Drawn so the paws sit at the very bottom of the texture (feet on the ground).
+        /// </summary>
+        public static Sprite PuppyBody(Color body, PuppyPose pose)
+        {
+            int W = 200, H = 170;
+            var tex = NewTex(W, H);
+            Color dark = GameConfig.PuppyBlack;
+            Color legC = Color.Lerp(body, dark, 0.18f);
+            Color ear = Color.Lerp(body, dark, 0.28f);
+            Color fluff = Color.Lerp(body, Color.white, 0.30f);
+
+            bool jump = pose == PuppyPose.Jump;
+            bool hit = pose == PuppyPose.Hit;
+
+            // tail (fluffy, at the back/left)
+            FillCircle(tex, 42, 100, 20, body);
+            FillCircle(tex, 36, 112, 13, fluff);
+
+            // legs: run frames swing them, jump tucks them up
+            int legTop = 76;
+            int legBot = jump ? 44 : 12;
+            int swing = pose == PuppyPose.Run1 ? 16 : pose == PuppyPose.Run2 ? -16 : 0;
+            DrawLeg(tex, 74 - swing, legBot, legTop, legC);   // back leg
+            DrawLeg(tex, 126 + swing, legBot, legTop, legC);  // front leg
+
+            // body
+            FillRoundedRect(tex, 38, 62, 118, 66, 30, body);
+            FillCircle(tex, 96, 96, 12, fluff); // chest fluff hint
+
+            // head (front/right)
+            FillCircle(tex, 152, 104, 42, body);
+            // ear
+            FillTriangle(tex, new Vector2(142, 142), new Vector2(124, 100), new Vector2(164, 116), ear);
+            // cheek fluff
+            FillCircle(tex, 150, 80, 17, fluff);
+
+            // eye + expression
+            if (hit)
+            {
+                DrawLine(tex, 160, 100, 172, 112, dark);
+                DrawLine(tex, 172, 100, 160, 112, dark);
+            }
+            else
+            {
+                FillCircle(tex, 167, 106, 10, dark);
+                FillCircle(tex, 170, 109, 3, Color.white);
+            }
+            // nose + snout
+            FillCircle(tex, 190, 96, 7, dark);
+
+            return FromTexture(tex);
+        }
+
+        // ---------- parallax layer strips (seamless-ish placeholders) ----------
+
+        /// <summary>Wide transparent strip with soft clouds, for the cloud parallax layer.</summary>
+        public static Sprite CloudStrip()
+        {
+            int W = 512, H = 200; var tex = NewTex(W, H);
+            Color c = new Color(1f, 1f, 1f, 0.9f);
+            int[] cx = { 70, 200, 340, 460 };
+            int[] cy = { 130, 70, 150, 90 };
+            foreach (var i in new[] { 0, 1, 2, 3 })
+            {
+                FillCircle(tex, cx[i], cy[i], 34, c);
+                FillCircle(tex, cx[i] + 34, cy[i] - 8, 26, c);
+                FillCircle(tex, cx[i] - 30, cy[i] - 6, 22, c);
+            }
+            return FromTexture(tex);
+        }
+
+        /// <summary>Wide strip of pastel building silhouettes, bottom-aligned, for the city layer.</summary>
+        public static Sprite CityStrip()
+        {
+            int W = 512, H = 200; var tex = NewTex(W, H);
+            Color[] cols =
+            {
+                new Color(0.80f, 0.82f, 0.92f), new Color(0.86f, 0.80f, 0.90f),
+                new Color(0.78f, 0.86f, 0.90f), new Color(0.88f, 0.85f, 0.80f)
+            };
+            int x = 6;
+            int idx = 0;
+            while (x < W - 10)
+            {
+                int bw = 48 + (idx * 17) % 40;
+                int bh = 70 + (idx * 37) % 95;
+                FillRoundedRect(tex, x, 0, bw, bh, 4, cols[idx % cols.Length]);
+                // windows
+                Color win = new Color(1f, 1f, 1f, 0.5f);
+                for (int wy = 14; wy < bh - 12; wy += 18)
+                    for (int wx = x + 8; wx < x + bw - 8; wx += 16)
+                        FillRoundedRect(tex, wx, wy, 7, 9, 1, win);
+                x += bw + 8;
+                idx++;
+            }
+            return FromTexture(tex);
+        }
+
+        /// <summary>Wide strip of round pastel trees, bottom-aligned, for the tree layer.</summary>
+        public static Sprite TreeStrip()
+        {
+            int W = 512, H = 170; var tex = NewTex(W, H);
+            Color trunk = new Color(0.66f, 0.52f, 0.40f);
+            Color leaf1 = new Color(0.70f, 0.84f, 0.58f);
+            Color leaf2 = new Color(0.62f, 0.78f, 0.52f);
+            int x = 30;
+            int idx = 0;
+            while (x < W - 20)
+            {
+                int th = 38 + (idx * 13) % 26;       // trunk height
+                int r = 34 + (idx * 11) % 18;        // canopy radius
+                FillRoundedRect(tex, x - 7, 0, 14, th, 4, trunk);
+                FillCircle(tex, x, th + r - 8, r, (idx % 2 == 0) ? leaf1 : leaf2);
+                FillCircle(tex, x - r / 2, th + r - 16, r - 10, Color.Lerp(leaf1, leaf2, 0.5f));
+                x += 70 + (idx * 9) % 30;
+                idx++;
+            }
+            return FromTexture(tex);
+        }
+
+        /// <summary>Tileable road surface strip (warm grey path) for the ground layer.</summary>
+        public static Sprite RoadStrip()
+        {
+            int W = 256, H = 120; var tex = NewTex(W, H);
+            Color road = new Color(0.74f, 0.70f, 0.64f);
+            Color dash = new Color(0.92f, 0.90f, 0.84f);
+            for (int y = 0; y < H; y++)
+                for (int x = 0; x < W; x++) tex.SetPixel(x, y, road);
+            // dashed center line near the top edge
+            for (int x = 10; x < W - 10; x += 64)
+                FillRoundedRect(tex, x, H - 26, 36, 8, 3, dash);
+            return FromTexture(tex);
+        }
     }
+
+    /// <summary>Animation poses for the placeholder/real puppy sprite swap.</summary>
+    public enum PuppyPose { Idle, Run1, Run2, Jump, Hit }
 }

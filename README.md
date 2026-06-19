@@ -308,6 +308,88 @@ and wire a real IAP SDK before release.
 
 ---
 
+## 🎨 Art pipeline — replacing the placeholders with real images
+
+The game ships with **procedural placeholder art** (simple shapes generated at
+runtime). You can replace any of it with real PNGs **without touching code** — just
+drop correctly-named files into the art folders. Anything missing keeps using the
+placeholder, so the game always runs.
+
+### Where to put images
+All runtime-loaded art lives under:
+
+```
+Assets/Resources/Art/
+├── Characters/Loui/      puppy_loui_idle / run_01 / run_02 / jump / hit .png
+├── Characters/Ver/       puppy_ver_idle  / run_01 / run_02 / jump / hit .png
+├── Obstacles/            obstacle_car / obstacle_puddle / obstacle_trash_bin /
+│                         obstacle_fence / obstacle_cone .png
+├── Collectibles/         collectible_bone / collectible_scent / collectible_photo_piece .png
+├── Backgrounds/          bg_sky / bg_clouds / bg_city / bg_trees / bg_road .png
+├── UI/                   ui_button / ui_panel / ui_logo / ui_bone_icon .png
+└── Effects/              (optional) effect_*.png
+```
+
+> ℹ️ **Why `Resources/Art` and not `Assets/Art`?** Unity's `Resources.Load` is the
+> only built-in way to load a sprite **by name at runtime** (no extra packages, no
+> manual inspector wiring), and it requires a folder named `Resources`. The
+> sub-folder taxonomy is exactly the one from the brief. Each folder contains a
+> `_DROP_ART_HERE.md` listing its exact filenames.
+
+### How replacement works (fallback chain)
+`AssetLoader.Get(key, placeholder)` → returns the real PNG if it exists in
+`Resources/Art/...`, otherwise runs the procedural `SpriteFactory` placeholder.
+Add a correctly-named PNG → it is used automatically on the next Play. (Art paths
+are centralised in `ArtKeys`.)
+
+### Filename rules
+- **lowercase**, words separated by `_`, exact names as listed above.
+- Character frames: `puppy_<skin>_<state>` where `<skin>` ∈ `loui`, `ver` and
+  `<state>` ∈ `idle`, `run_01`, `run_02`, `jump`, `hit`.
+- Keep **every frame of one character on the same canvas size** so the swap doesn't
+  jitter, and draw the **paws at the very bottom** of the canvas (feet = ground).
+
+### Recommended sizes & transparency
+| Asset | Recommended px | Transparent BG |
+|-------|----------------|----------------|
+| Character frames (`puppy_*`) | ~400 × 360 | **Yes** |
+| `obstacle_car` | ~360 × 190 | Yes |
+| `obstacle_puddle` | ~300 × 80 | Yes |
+| `obstacle_trash_bin` | ~150 × 210 | Yes |
+| `obstacle_fence` | ~200 × 240 | Yes |
+| `obstacle_cone` | ~140 × 200 | Yes |
+| `collectible_*` | ~120 × 120 | Yes |
+| `bg_sky` | ~1080 × 1920 | No (opaque) |
+| `bg_clouds` / `bg_city` / `bg_trees` | ~1024 × 512, **horizontally tileable**, content bottom-aligned | Yes |
+| `bg_road` | ~512 × 256, **horizontally tileable** | No (opaque) |
+| `ui_button` / `ui_panel` | ~300 × 120 (with 9-slice border) | Yes |
+| `ui_logo` | ~760 × 300 | Yes |
+| `ui_bone_icon` | ~96 × 96 | Yes |
+
+### Unity import settings (per PNG)
+- **Texture Type:** `Sprite (2D and UI)` ← required, or `Resources.Load<Sprite>` returns null.
+- **Sprite Mode:** Single
+- **Pixels Per Unit:** **100** (project default).
+- **Filter Mode:** Bilinear · **Compression:** None or High Quality · **Max Size:** 2048
+- **Wrap Mode:** Clamp (use **Repeat** for the tileable `bg_clouds/bg_city/bg_trees/bg_road`).
+- For `ui_button` / `ui_panel`: open the **Sprite Editor** and set 9-slice **Border**
+  so corners don't stretch.
+
+### Art style guide (for whoever draws it)
+- 2D cartoon, **cute Pomeranian**, **full-body side view** facing right.
+- Pastel / warm palette, soft shapes — **not** realistic.
+- Big eyes, clear expression (the `hit` frame should read as "ouch/dizzy").
+- Designed for a **portrait mobile** screen. Avoid Flappy-Bird-style pipes/bird.
+
+### Full-body visibility (how it's framed)
+The puppy auto-normalises to **~1.85 world units tall** (`PlayerController.TargetHeight`),
+regardless of PNG resolution, and the gameplay camera is `orthographicSize = 5.6`.
+So as long as the **whole dog is inside the canvas with paws at the bottom**, the
+full body shows correctly without per-asset tweaking. The capsule collider auto-fits
+the sprite bounds.
+
+---
+
 ## 📝 Notes / next steps
 - **Render pipeline:** uses the built-in 2D pipeline for maximum portability. To
   move to **2D URP** as in the brief, install `com.unity.render-pipelines.universal`,

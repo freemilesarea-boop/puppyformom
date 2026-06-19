@@ -31,13 +31,19 @@ namespace PuppyForMom.UI
                 cam.backgroundColor = GameConfig.SkyBottom;
             }
 
-            // sky gradient + a big happy puppy + clouds
-            MakeSprite("MenuSky", SpriteFactory.VerticalGradient(GameConfig.SkyTop, GameConfig.SkyBottom),
+            var save = ServiceLocator.Get<SaveManager>();
+            string skin = save != null ? save.SelectedSkin : "Loui";
+            Color puppyColor = skin == "Ver" ? GameConfig.PuppyBlack : GameConfig.PuppyCream;
+
+            // sky + ground + a big happy full-body puppy + clouds (real PNG when available)
+            MakeSprite("MenuSky",
+                AssetLoader.Get(ArtKeys.BgSky, () => SpriteFactory.VerticalGradient(GameConfig.SkyTop, GameConfig.SkyBottom)),
                 new Vector3(0, 0, 0), new Vector3(26, 16, 1), -20);
             MakeSprite("MenuGround", SpriteFactory.SolidRounded(GameConfig.GroundColor, 64, 64, 0),
                 new Vector3(0, -6.5f, 0), new Vector3(28, 6, 1), -5);
-            MakeSprite("MenuPuppy", SpriteFactory.Puppy(GameConfig.PuppyCream),
-                new Vector3(0, -2.2f, 0), new Vector3(3.6f, 3.6f, 1), 1);
+            MakeSprite("MenuPuppy",
+                AssetLoader.Get(ArtKeys.Puppy(skin, ArtKeys.StateIdle), () => SpriteFactory.PuppyBody(puppyColor, PuppyPose.Idle)),
+                new Vector3(0, -2.4f, 0), new Vector3(2.2f, 2.2f, 1), 1);
             MakeSprite("MenuCloud1", SpriteFactory.Cloud(), new Vector3(-4.5f, 3.5f, 0), Vector3.one * 1.4f, -15);
             MakeSprite("MenuCloud2", SpriteFactory.Cloud(), new Vector3(4f, 4.5f, 0), Vector3.one, -15);
         }
@@ -45,6 +51,19 @@ namespace PuppyForMom.UI
         private void BuildMenu()
         {
             var canvas = UIBuilder.CreateCanvas("Menu_Canvas").transform;
+
+            // Optional logo image (ui_logo.png). When absent, the text title below is the title.
+            var logo = AssetLoader.Get(ArtKeys.UiLogo, () => (Sprite)null);
+            if (logo != null)
+            {
+                var rt = UIBuilder.AddRect(canvas, "Logo");
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.88f);
+                rt.sizeDelta = new Vector2(760, 300);
+                var img = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+                img.sprite = logo;
+                img.preserveAspect = true;
+                img.raycastTarget = false;
+            }
 
             UIBuilder.CreateLabel(canvas, "Puppy For Mom", 96, new Color(0.45f, 0.32f, 0.25f),
                 new Vector2(0.5f, 0.86f), new Vector2(0.5f, 0.86f), Vector2.zero, new Vector2(1000, 200));
