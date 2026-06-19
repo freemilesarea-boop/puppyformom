@@ -35,6 +35,17 @@ namespace PuppyForMom.Core
         public const float MinSpawnInterval = 0.85f;
         public const float CollectibleChance = 0.55f; // chance a spawn slot is a treat instead of an obstacle
 
+        // ---- Art world-size normalization ----
+        // Sprites are scaled at spawn so their on-screen WORLD HEIGHT matches these values,
+        // making the game look right regardless of the source PNG resolution.
+        public const float CharacterWorldHeight = 1.85f;   // the puppy's full-body height
+        public const float ObstacleWorldHeight = 1.30f;    // base; ~70% of the puppy (per-type tuned)
+        public const float CollectibleWorldHeight = 0.70f; // base; ~38% of the puppy (per-type tuned)
+
+        // Collider sizing (fraction of the normalized sprite) — gameplay-based, not raw pixels.
+        public const float ObstacleColliderFactor = 0.80f;    // box, relative to the sprite size
+        public const float CollectibleColliderFactor = 0.85f; // circle radius, relative to half-height
+
         // ---- Scoring ----
         public const int BoneScoreValue = 10;
         public const int MeterScoreDivisor = 2; // score also gets distanceMeters / divisor

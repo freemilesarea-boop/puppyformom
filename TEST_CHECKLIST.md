@@ -125,6 +125,14 @@ Check items off as you go. Nothing here requires real ad/IAP SDKs (all mocked).
 - [ ] Background shows distinct **parallax layers** (sky, clouds, city, trees, road)
       moving at different speeds.
 
+**Size / collision balance (resolution-independent):**
+- [ ] Bones are small — roughly **30–50% of the puppy's height**.
+- [ ] Cones are roughly **60–90% of the puppy's height** (not wall-sized).
+- [ ] Swapping in a much higher- or lower-resolution PNG does **not** change the
+      in-game size (only aspect ratio matters).
+- [ ] Selecting **`GameplayBootstrap`** in `Gameplay.unity` shows `Obstacle/Collectible
+      World Height` + `Scale Multiplier` fields, and changing them resizes spawns.
+
 **After dropping in real PNGs:**
 - [ ] Put e.g. `Assets/Resources/Art/Characters/Loui/puppy_loui_idle.png` (Texture
       Type = **Sprite**) → re-enter Play → the **real image** is used automatically.

@@ -18,6 +18,16 @@ namespace PuppyForMom.Gameplay
         // while staying well inside the narrow portrait view.
         private const float PlayerX = -1.6f;
 
+        [Header("Art world-size (units) — tweak live in the Scene Inspector")]
+        [Tooltip("Target on-screen height of obstacles, in world units (resolution-independent).")]
+        [SerializeField] private float obstacleWorldHeight = GameConfig.ObstacleWorldHeight;
+        [Tooltip("Target on-screen height of collectibles, in world units (resolution-independent).")]
+        [SerializeField] private float collectibleWorldHeight = GameConfig.CollectibleWorldHeight;
+        [Tooltip("Extra multiplier on all obstacle sizes.")]
+        [SerializeField] private float obstacleScaleMultiplier = 1f;
+        [Tooltip("Extra multiplier on all collectible sizes.")]
+        [SerializeField] private float collectibleScaleMultiplier = 1f;
+
         private void Awake()
         {
             ConfigureCamera();
@@ -56,7 +66,11 @@ namespace PuppyForMom.Gameplay
         {
             new GameObject("Parallax").AddComponent<ParallaxBackground>();
             new GameObject("Ground").AddComponent<GroundScroller>();
-            new GameObject("Spawner").AddComponent<ObstacleSpawner>();
+
+            var spawner = new GameObject("Spawner").AddComponent<ObstacleSpawner>();
+            spawner.Configure(
+                obstacleWorldHeight * obstacleScaleMultiplier,
+                collectibleWorldHeight * collectibleScaleMultiplier);
 
             CreatePlayer();
 

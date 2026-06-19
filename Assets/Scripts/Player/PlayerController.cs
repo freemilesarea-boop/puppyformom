@@ -20,8 +20,8 @@ namespace PuppyForMom.Player
     public class PlayerController : MonoBehaviour
     {
         // Visual target so the whole dog is comfortably visible on a portrait screen,
-        // independent of the source PNG resolution.
-        private const float TargetHeight = 1.85f;
+        // independent of the source PNG resolution. (Single source of truth in GameConfig.)
+        private const float TargetHeight = GameConfig.CharacterWorldHeight;
         private const float RunFrameTime = 0.12f; // seconds per run frame (simple 2-frame loop)
 
         private float _verticalVelocity;

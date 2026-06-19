@@ -11,9 +11,12 @@ namespace PuppyForMom.Gameplay
     /// </summary>
     public class ObstacleSpawner : MonoBehaviour
     {
-        private const int PPU = 100;
         private float _timer;
         private float _nextDelay;
+
+        // Base world heights (set by GameplayBootstrap.Configure; defaults keep it usable standalone).
+        private float _obstacleH = GameConfig.ObstacleWorldHeight;
+        private float _collectibleH = GameConfig.CollectibleWorldHeight;
 
         // cached sprites
         private Sprite _car, _puddle, _bin, _fence, _cone, _bone, _smell, _photo;
@@ -26,6 +29,33 @@ namespace PuppyForMom.Gameplay
             BuildSprites();
             _nextDelay = GameConfig.StartSpawnInterval;
         }
+
+        /// <summary>Injected by GameplayBootstrap so the sizes are tunable from the Scene.</summary>
+        public void Configure(float obstacleWorldHeight, float collectibleWorldHeight)
+        {
+            _obstacleH = obstacleWorldHeight;
+            _collectibleH = collectibleWorldHeight;
+        }
+
+        // Per-type height multipliers (applied on top of the category world height) so the
+        // different objects keep distinct silhouettes while staying resolution-independent.
+        private static float ObstacleMultiplier(ObstacleType t) => t switch
+        {
+            ObstacleType.Car => 0.85f,    // short but wide
+            ObstacleType.Puddle => 0.42f, // flat
+            ObstacleType.Bin => 0.90f,
+            ObstacleType.Fence => 1.15f,  // tall
+            ObstacleType.Cone => 1.00f,   // ~70% of the puppy
+            _ => 1f
+        };
+
+        private static float CollectibleMultiplier(CollectibleType t) => t switch
+        {
+            CollectibleType.Bone => 1.00f,
+            CollectibleType.Smell => 1.10f,
+            CollectibleType.Photo => 1.00f,
+            _ => 1f
+        };
 
         private void BuildSprites()
         {
@@ -85,13 +115,17 @@ namespace PuppyForMom.Gameplay
             };
 
             var go = NewSpriteObject($"Obstacle_{type}", sprite, sortingOrder: 5);
-            float halfH = sprite.bounds.extents.y;
-            go.transform.position = new Vector3(GameConfig.SpawnXOffset, GameConfig.GroundY + halfH, 0f);
+
+            // Normalize to a gameplay world height (independent of the PNG's pixel size).
+            float targetH = _obstacleH * ObstacleMultiplier(type);
+            NormalizeHeight(go.transform, sprite, targetH);
+            go.transform.position = new Vector3(GameConfig.SpawnXOffset, GameConfig.GroundY + targetH * 0.5f, 0f);
 
             var col = go.AddComponent<BoxCollider2D>();
             col.isTrigger = true;
-            // shrink the hitbox a touch so grazes feel fair
-            col.size = sprite.bounds.size * 0.82f;
+            // Collider is sized from the normalized sprite, then shrunk so grazes feel fair.
+            col.size = sprite.bounds.size * GameConfig.ObstacleColliderFactor;
+            col.offset = sprite.bounds.center;
 
             go.AddComponent<Obstacle>().Init(type);
         }
@@ -111,6 +145,11 @@ namespace PuppyForMom.Gameplay
                 };
 
                 var go = NewSpriteObject($"Treat_{type}", sprite, sortingOrder: 4);
+
+                // Normalize to a gameplay world height (independent of the PNG's pixel size).
+                float targetH = _collectibleH * CollectibleMultiplier(type);
+                NormalizeHeight(go.transform, sprite, targetH);
+
                 float arc = Mathf.Sin(i / Mathf.Max(1f, count - 1f) * Mathf.PI) * 0.5f;
                 go.transform.position = new Vector3(
                     GameConfig.SpawnXOffset + i * 0.7f,
@@ -119,7 +158,9 @@ namespace PuppyForMom.Gameplay
 
                 var col = go.AddComponent<CircleCollider2D>();
                 col.isTrigger = true;
-                col.radius = sprite.bounds.extents.y * 1.1f;
+                // Radius from the normalized half-height -> consistent pickup size for any PNG.
+                col.radius = sprite.bounds.extents.y * GameConfig.CollectibleColliderFactor;
+                col.offset = sprite.bounds.center;
 
                 go.AddComponent<Collectible>().Init(type);
             }
@@ -131,6 +172,17 @@ namespace PuppyForMom.Gameplay
             if (r < 0.08f) return CollectibleType.Photo;   // rare, unlocks ending
             if (r < 0.20f) return CollectibleType.Smell;   // story flavour
             return CollectibleType.Bone;                    // common score
+        }
+
+        /// <summary>
+        /// Uniformly scales the object so the sprite's WORLD height equals <paramref name="targetWorldHeight"/>,
+        /// preserving aspect ratio. This makes on-screen size independent of the PNG resolution.
+        /// </summary>
+        private static void NormalizeHeight(Transform t, Sprite sprite, float targetWorldHeight)
+        {
+            float h = sprite.bounds.size.y;
+            float scale = h > 0.0001f ? targetWorldHeight / h : 1f;
+            t.localScale = new Vector3(scale, scale, 1f);
         }
 
         private GameObject NewSpriteObject(string name, Sprite sprite, int sortingOrder)

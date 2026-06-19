@@ -386,7 +386,46 @@ The puppy auto-normalises to **~1.85 world units tall** (`PlayerController.Targe
 regardless of PNG resolution, and the gameplay camera is `orthographicSize = 5.6`.
 So as long as the **whole dog is inside the canvas with paws at the bottom**, the
 full body shows correctly without per-asset tweaking. The capsule collider auto-fits
-the sprite bounds.
+the normalized body.
+
+### Art Asset Scale Guide (size is independent of PNG resolution)
+**You do not need to export PNGs at a specific resolution.** Every sprite is scaled
+at runtime so its **on-screen world height** matches a per-category target — a
+4000 px car and a 200 px car end up the same in-game size. Only the **aspect ratio**
+of your PNG matters (draw the object filling the canvas, resting on the bottom edge).
+
+**Category target world heights** (defined in `GameConfig`, 1 unit ≈ the camera shows ~11 units tall):
+
+| Category | Target world height | ≈ % of puppy | Where |
+|----------|--------------------|--------------|-------|
+| Character (puppy) | **1.85** | 100% | `GameConfig.CharacterWorldHeight` |
+| Obstacle (base) | **1.30** | ~70% | `GameConfig.ObstacleWorldHeight` |
+| Collectible (base) | **0.70** | ~38% | `GameConfig.CollectibleWorldHeight` |
+
+**Per-type multipliers** (on top of the base, in `ObstacleSpawner`) keep distinct
+silhouettes:
+
+| Obstacle | ×mult | final height | | Collectible | ×mult | final height |
+|----------|------:|-------------:|-|-------------|------:|-------------:|
+| car | 0.85 | ~1.10 | | bone | 1.00 | ~0.70 (≈38% of puppy) |
+| puddle | 0.42 | ~0.55 | | scent | 1.10 | ~0.77 |
+| trash_bin | 0.90 | ~1.17 | | photo_piece | 1.00 | ~0.70 |
+| fence | 1.15 | ~1.50 | | | | |
+| cone | 1.00 | ~1.30 (≈70% of puppy) | | | | |
+
+**Tweak sizes live in the Scene (no code):** select the **`GameplayBootstrap`** object
+in `Assets/Scenes/Gameplay.unity` → Inspector exposes:
+- `Obstacle World Height`, `Collectible World Height` — the base targets.
+- `Obstacle Scale Multiplier`, `Collectible Scale Multiplier` — global multipliers
+  applied to every obstacle / collectible.
+
+**Colliders are gameplay-based, not pixel-based:** hitboxes are derived from the
+**normalized** size (`ObstacleColliderFactor = 0.80` box, `CollectibleColliderFactor = 0.85`
+radius), so collisions stay fair no matter the PNG resolution.
+
+> To make something bigger/smaller permanently, change its multiplier in
+> `ObstacleSpawner.ObstacleMultiplier` / `CollectibleMultiplier`, or the category
+> base in `GameConfig`. For a quick all-over tweak, use the Scene multipliers above.
 
 ---
 
