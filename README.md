@@ -36,21 +36,60 @@ and cones. Collect:
 
 ---
 
-## 🚀 Opening & running the project
+## 🚀 First run — step by step (read this first)
 
-1. Install **Unity 6** (`6000.0.x`) via Unity Hub (the project pins
-   `6000.0.32f1` in `ProjectSettings/ProjectVersion.txt`; any 6000.0.x will
-   offer to open it).
-2. **Add project from disk** in Unity Hub → select this folder.
-3. Open the scene **`Assets/Scenes/Boot.unity`** and press **Play**, or just press
-   Play (the Boot scene is first in Build Settings and chains to the menu).
+1. **Install Unity 6** (`6000.0.x`) via Unity Hub. The project pins
+   `6000.0.32f1` in `ProjectSettings/ProjectVersion.txt`; any `6000.0.x` will
+   open it (Hub may show an "upgrade" prompt — that's normal, accept it).
+2. In **Unity Hub → Add → Add project from disk**, select **this folder**
+   (the one containing `Assets/`, `Packages/`, `ProjectSettings/`).
+3. Open the project. The **first import takes a few minutes** (Unity builds the
+   `Library/` folder). Wait until the spinner in the bottom-right stops.
+4. **Check the Console** (`Window → General → Console`). It should be free of
+   red **compile errors**. (A few yellow warnings are fine.)
+5. Open **`Assets/Scenes/Boot.unity`** (double-click it in the Project window).
+6. Press **▶ Play**.
 
-The flow is `Boot → MainMenu → Gameplay → Ending`, all four scenes are already in
-**Build Settings**.
+That's it — you should see the boot screen, then the Main Menu, then tap/click
+**PLAY** to start running.
+
+> ✅ **You can press Play from any scene.** A `RuntimeInitializeOnLoadMethod`
+> creates the shared services before the first scene loads, so even if you press
+> Play while `Gameplay.unity` (or any scene) is open, it still works — you are not
+> forced to start from `Boot`.
+
+The scene flow is `Boot → MainMenu → Gameplay → Ending`; all four scenes are
+already registered in **Build Settings** (no manual setup needed).
 
 > **Zero art assets required.** All sprites (puppy, obstacles, treats, clouds,
 > backgrounds) and sound effects are generated **procedurally at runtime**, so the
 > game renders and plays immediately. Swap them for real art/audio later.
+
+### ✅ Pre-flight verification (optional, command line)
+You can confirm the project compiles without opening the Editor GUI:
+
+```bash
+# point UNITY at your installed editor binary, then:
+UNITY="/Applications/Unity/Hub/Editor/6000.0.32f1/Unity.app/Contents/MacOS/Unity" \
+  ./Tools/verify_compile.sh
+```
+
+This launches Unity in **batchmode**, imports + compiles all scripts, and fails
+if any `error CS####` appears in the log. See `Tools/verify_compile.sh` for the
+exact command and platform paths.
+
+### 🛟 Troubleshooting
+- **Pink / magenta sprites:** ignore — generated sprites use the default 2D
+  material and render correctly in the built-in pipeline. If the whole screen is
+  pink, you likely switched to URP without assigning a pipeline asset.
+- **No input / jump doesn't work:** confirm `Edit → Project Settings → Player →
+  Other Settings → Active Input Handling` is **Input Manager (Old)**. This repo
+  ships it set that way (`activeInputHandler: 0`) and uses the legacy `Input` API.
+- **Korean text shows as boxes in a build:** the built-in font falls back to the
+  device's system font for Korean; add a TextMeshPro Korean font for guarantees.
+- **NullReference about GameManager:** make sure you opened the *project root*
+  (so `RuntimeInitializeOnLoadMethod` runs); re-import if needed
+  (`Assets → Reimport All`).
 
 ### Build for Android
 - `File → Build Settings → Android → Switch Platform`.

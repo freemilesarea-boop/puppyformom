@@ -21,12 +21,10 @@ namespace PuppyForMom.Player
         private float _holdTime;
         private bool _dead;
         private int _invincibleFrames;
-        private SpriteRenderer _sr;
         private float _baseScaleX;
 
         private void Awake()
         {
-            _sr = GetComponent<SpriteRenderer>();
             var rb = GetComponent<Rigidbody2D>();
             rb.bodyType = RigidbodyType2D.Kinematic;
             rb.simulated = true;

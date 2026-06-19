@@ -163,6 +163,12 @@ namespace PuppyForMom.UI
         }
 
         // ---------------- Events ----------------
+        // Cache the persistent managers so we can unsubscribe the exact same delegates
+        // in OnDestroy. (These managers survive scene loads, so leaking handlers here
+        // would accumulate across every Restart.)
+        private ScoreManager _score;
+        private DistanceManager _distance;
+
         private void Subscribe()
         {
             if (GM != null)
@@ -170,15 +176,15 @@ namespace PuppyForMom.UI
                 GM.OnStateChanged += OnStateChanged;
                 GM.OnMilestone += OnMilestone;
             }
-            var score = ServiceLocator.Get<ScoreManager>();
-            if (score != null)
+            _score = ServiceLocator.Get<ScoreManager>();
+            if (_score != null)
             {
-                score.OnScoreChanged += s => { if (_scoreText) _scoreText.text = $"Score {s}"; };
-                score.OnBonesChanged += b => { if (_bonesText) _bonesText.text = b.ToString(); };
+                _score.OnScoreChanged += HandleScoreChanged;
+                _score.OnBonesChanged += HandleBonesChanged;
             }
-            var dist = ServiceLocator.Get<DistanceManager>();
-            if (dist != null)
-                dist.OnMetersChanged += m => { if (_distanceText) _distanceText.text = $"{m} m"; };
+            _distance = ServiceLocator.Get<DistanceManager>();
+            if (_distance != null)
+                _distance.OnMetersChanged += HandleMetersChanged;
         }
 
         private void Unsubscribe()
@@ -188,7 +194,18 @@ namespace PuppyForMom.UI
                 GM.OnStateChanged -= OnStateChanged;
                 GM.OnMilestone -= OnMilestone;
             }
+            if (_score != null)
+            {
+                _score.OnScoreChanged -= HandleScoreChanged;
+                _score.OnBonesChanged -= HandleBonesChanged;
+            }
+            if (_distance != null)
+                _distance.OnMetersChanged -= HandleMetersChanged;
         }
+
+        private void HandleScoreChanged(int s) { if (_scoreText) _scoreText.text = $"Score {s}"; }
+        private void HandleBonesChanged(int b) { if (_bonesText) _bonesText.text = b.ToString(); }
+        private void HandleMetersChanged(int m) { if (_distanceText) _distanceText.text = $"{m} m"; }
 
         private void OnStateChanged(GameState s)
         {

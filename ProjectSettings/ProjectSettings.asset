@@ -298,8 +298,6 @@ PlayerSettings:
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform: {}
   editorAssembliesCompatibilityLevel: 1
-  m_RenderingPath: 1
-  m_MobileRenderingPath: 1
   metroPackageName: Puppy For Mom
   metroPackageVersion:
   metroCertificatePath:

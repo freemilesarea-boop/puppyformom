@@ -15,6 +15,18 @@ namespace PuppyForMom.Core
 
         private static bool _servicesCreated;
 
+        /// <summary>
+        /// Safety net so the game is testable when you press Play from ANY scene
+        /// (e.g. opening Gameplay directly in the Editor), not only from Boot.
+        /// Runs before the first scene loads and creates the persistent services once.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void Bootstrap()
+        {
+            ApplyGlobalSettings();
+            EnsureServices();
+        }
+
         private IEnumerator Start()
         {
             ApplyGlobalSettings();
