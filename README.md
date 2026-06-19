@@ -382,11 +382,11 @@ are centralised in `ArtKeys`.)
 - Designed for a **portrait mobile** screen. Avoid Flappy-Bird-style pipes/bird.
 
 ### Full-body visibility (how it's framed)
-The puppy auto-normalises to **~1.85 world units tall** (`PlayerController.TargetHeight`),
-regardless of PNG resolution, and the gameplay camera is `orthographicSize = 5.6`.
-So as long as the **whole dog is inside the canvas with paws at the bottom**, the
-full body shows correctly without per-asset tweaking. The capsule collider auto-fits
-the normalized body.
+The puppy auto-normalises to **~1.9 world units tall** (`GameConfig.CharacterWorldHeight`),
+regardless of PNG resolution, and the gameplay camera is `orthographicSize = 5.0`
+(visible height ≈ 10 units) → the dog is **~18–19% of the screen height**. So as long
+as the **whole dog is inside the canvas with paws at the bottom**, the full body shows
+correctly without per-asset tweaking. The capsule collider auto-fits the normalized body.
 
 ### Art Asset Scale Guide (size is independent of PNG resolution)
 **You do not need to export PNGs at a specific resolution.** Every sprite is scaled
@@ -394,27 +394,31 @@ at runtime so its **on-screen world height** matches a per-category target — a
 4000 px car and a 200 px car end up the same in-game size. Only the **aspect ratio**
 of your PNG matters (draw the object filling the canvas, resting on the bottom edge).
 
-**Category target world heights** (defined in `GameConfig`, 1 unit ≈ the camera shows ~11 units tall):
+**Recommended camera + category target world heights** (defaults in `GameConfig`;
+visible height ≈ `2 × orthographicSize`):
 
-| Category | Target world height | ≈ % of puppy | Where |
-|----------|--------------------|--------------|-------|
-| Character (puppy) | **1.85** | 100% | `GameConfig.CharacterWorldHeight` |
-| Obstacle (base) | **1.30** | ~70% | `GameConfig.ObstacleWorldHeight` |
-| Collectible (base) | **0.70** | ~38% | `GameConfig.CollectibleWorldHeight` |
+| Setting | Value | Notes |
+|---------|------:|-------|
+| Camera `orthographicSize` | **5.0** | visible height ≈ 10 units (tight portrait framing) |
+| Character (puppy) | **1.90** | ≈ 19% of screen height · `CharacterWorldHeight` |
+| Obstacle (base) | **1.55** | ~80% of puppy · `ObstacleWorldHeight` |
+| Collectible (base) | **1.00** | ~50% of puppy · `CollectibleWorldHeight` |
 
 **Per-type multipliers** (on top of the base, in `ObstacleSpawner`) keep distinct
-silhouettes:
+silhouettes while staying in the target bands (obstacles 70–100%, collectibles 45–60%
+of the puppy):
 
-| Obstacle | ×mult | final height | | Collectible | ×mult | final height |
-|----------|------:|-------------:|-|-------------|------:|-------------:|
-| car | 0.85 | ~1.10 | | bone | 1.00 | ~0.70 (≈38% of puppy) |
-| puddle | 0.42 | ~0.55 | | scent | 1.10 | ~0.77 |
-| trash_bin | 0.90 | ~1.17 | | photo_piece | 1.00 | ~0.70 |
-| fence | 1.15 | ~1.50 | | | | |
-| cone | 1.00 | ~1.30 (≈70% of puppy) | | | | |
+| Obstacle | ×mult | final height | ≈% of puppy | | Collectible | ×mult | final height | ≈% of puppy |
+|----------|------:|-------------:|------------:|-|-------------|------:|-------------:|------------:|
+| car | 0.90 | ~1.40 | 73% | | bone | 1.00 | ~1.00 | 53% |
+| puddle | 0.42 | ~0.65 | flat | | scent | 1.10 | ~1.10 | 58% |
+| trash_bin | 0.90 | ~1.40 | 73% | | photo_piece | 1.00 | ~1.00 | 53% |
+| fence | 1.10 | ~1.70 | 90% | | | | | |
+| cone | 1.00 | ~1.55 | 82% | | | | | |
 
-**Tweak sizes live in the Scene (no code):** select the **`GameplayBootstrap`** object
-in `Assets/Scenes/Gameplay.unity` → Inspector exposes:
+**Tweak framing & sizes live in the Scene (no code):** select the **`GameplayBootstrap`**
+object in `Assets/Scenes/Gameplay.unity` → Inspector exposes:
+- `Camera Orthographic Size` — zoom (smaller = objects look bigger).
 - `Obstacle World Height`, `Collectible World Height` — the base targets.
 - `Obstacle Scale Multiplier`, `Collectible Scale Multiplier` — global multipliers
   applied to every obstacle / collectible.

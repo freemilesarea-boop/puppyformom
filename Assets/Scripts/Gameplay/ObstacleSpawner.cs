@@ -41,11 +41,11 @@ namespace PuppyForMom.Gameplay
         // different objects keep distinct silhouettes while staying resolution-independent.
         private static float ObstacleMultiplier(ObstacleType t) => t switch
         {
-            ObstacleType.Car => 0.85f,    // short but wide
+            ObstacleType.Car => 0.90f,    // short but wide (~73% of the puppy)
             ObstacleType.Puddle => 0.42f, // flat
-            ObstacleType.Bin => 0.90f,
-            ObstacleType.Fence => 1.15f,  // tall
-            ObstacleType.Cone => 1.00f,   // ~70% of the puppy
+            ObstacleType.Bin => 0.90f,    // ~73%
+            ObstacleType.Fence => 1.10f,  // tall (~90%)
+            ObstacleType.Cone => 1.00f,   // ~82% of the puppy
             _ => 1f
         };
 

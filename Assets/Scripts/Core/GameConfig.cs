@@ -38,9 +38,12 @@ namespace PuppyForMom.Core
         // ---- Art world-size normalization ----
         // Sprites are scaled at spawn so their on-screen WORLD HEIGHT matches these values,
         // making the game look right regardless of the source PNG resolution.
-        public const float CharacterWorldHeight = 1.85f;   // the puppy's full-body height
-        public const float ObstacleWorldHeight = 1.30f;    // base; ~70% of the puppy (per-type tuned)
-        public const float CollectibleWorldHeight = 0.70f; // base; ~38% of the puppy (per-type tuned)
+        public const float CharacterWorldHeight = 1.90f;   // ~18-19% of screen height at the default camera
+        public const float ObstacleWorldHeight = 1.55f;    // base; ~80% of the puppy (per-type tuned)
+        public const float CollectibleWorldHeight = 1.00f; // base; ~50% of the puppy (per-type tuned)
+
+        // Default gameplay camera framing (orthographic half-height). Smaller = more zoomed-in.
+        public const float CameraOrthographicSize = 5.0f;
 
         // Collider sizing (fraction of the normalized sprite) — gameplay-based, not raw pixels.
         public const float ObstacleColliderFactor = 0.80f;    // box, relative to the sprite size

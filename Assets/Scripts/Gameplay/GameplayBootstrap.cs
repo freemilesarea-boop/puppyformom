@@ -18,6 +18,10 @@ namespace PuppyForMom.Gameplay
         // while staying well inside the narrow portrait view.
         private const float PlayerX = -1.6f;
 
+        [Header("Camera framing — tweak live in the Scene Inspector")]
+        [Tooltip("Orthographic half-height. Smaller = more zoomed-in (objects look bigger).")]
+        [SerializeField] private float cameraOrthographicSize = GameConfig.CameraOrthographicSize;
+
         [Header("Art world-size (units) — tweak live in the Scene Inspector")]
         [Tooltip("Target on-screen height of obstacles, in world units (resolution-independent).")]
         [SerializeField] private float obstacleWorldHeight = GameConfig.ObstacleWorldHeight;
@@ -57,7 +61,7 @@ namespace PuppyForMom.Gameplay
                 cam = camGo.AddComponent<Camera>();
             }
             cam.orthographic = true;
-            cam.orthographicSize = 5.6f;        // portrait framing: dog + ground clearly visible
+            cam.orthographicSize = cameraOrthographicSize; // tighter portrait framing (Inspector-tunable)
             cam.backgroundColor = GameConfig.SkyBottom;
             cam.transform.position = new Vector3(0f, 0.4f, -10f);
         }
